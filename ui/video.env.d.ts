@@ -1,0 +1,1 @@
+/// <reference types="../packages/deft-video/ts/video" />

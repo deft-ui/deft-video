@@ -1,0 +1,44 @@
+import {Container} from "deft-react";
+import React from "react";
+
+export interface ProgressProps {
+    style ?: StyleProps,
+    value: number;
+    onChange?: (value: number) => void;
+}
+
+export default function Progress(props ?: ProgressProps): React.ReactElement {
+    const value = props.value || 0;
+    const progressPercent = value.toFixed(2);
+    const [width, setWidth] = React.useState(0);
+
+    function onBoundsChange(e: IBoundsChangeEvent) {
+        setWidth(e.detail.originBounds.width);
+    }
+
+    function onClick(e: IMouseEvent) {
+        let x = e.detail.offsetX;
+        const newProgress = Math.min(x / width, 1.0) * 100;
+        console.log({newProgress});
+        props.onChange?.(newProgress);
+    }
+
+    const style: StyleProps = {
+        width: `${progressPercent}%`,
+        height: 3,
+        background: '#34566F',
+    }
+
+    return <Container
+        style={{
+            ...props.style,
+            height: 10,
+            justifyContent: 'center',
+        }}
+        onBoundsChange={onBoundsChange}
+        onClick={onClick}
+        cursor="pointer"
+    >
+        <Container style={style}/>
+    </Container>
+}

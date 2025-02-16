@@ -2,6 +2,7 @@ use deft::app::{App, IApp};
 use deft::bootstrap;
 use deft::js::js_engine::JsEngine;
 use std::env;
+use deft_video::deft_video_init;
 
 struct MyApp {}
 
@@ -10,6 +11,7 @@ impl IApp for MyApp {
         js_engine
             .eval_module(include_str!("../dev-hack.js"), "dev-hack.js")
             .unwrap();
+        deft_video_init(js_engine);
     }
 
     fn create_module_loader(

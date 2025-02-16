@@ -1,10 +1,11 @@
 [package]
-name = "deft-app"
+name = "deft-video-player"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 deft = "0.2.0"
+deft-video = { path = "packages/deft-video" }
 
 [build-dependencies]
 deft-build = { version = "0.2.0" }

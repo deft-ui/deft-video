@@ -1,0 +1,22 @@
+[package]
+name = "deft-video"
+version = "0.1.0"
+edition = "2021"
+
+license = "GPL-2.0-or-later"
+description = "Video component for deft"
+authors = ["KasonYang <me@kason.fun>"]
+
+[dependencies]
+deft = "0.2.4"
+ffmpeg-next = "7.1.0"
+skia-safe = { package = "deft-skia-safe", version = "0.81.0" }
+serde = { version = "1.0.213", features = ["derive"] }
+cpal = "0.15.3"
+ringbuf = "0.3.3"
+bytemuck = "1.13.1"
+anyhow = "1.0.93"
+
+[features]
+x11 = ["deft/x11"]
+wayland = ["deft/wayland"]
