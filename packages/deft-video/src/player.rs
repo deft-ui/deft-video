@@ -12,13 +12,12 @@ use ffmpeg_next::decoder::{Audio, Video};
 use ffmpeg_next::format::context::Input;
 use ffmpeg_next::format::Pixel;
 use ffmpeg_next::software::resampling::Context;
-use ffmpeg_next::{ffi, frame, Error, Rational};
+use ffmpeg_next::{frame, threading, Error, Rational};
 use ffmpeg_next::ffi::AV_TIME_BASE;
-use deft::{event, js_serialize};
+use ffmpeg_next::threading::Config;
 use ringbuf::{HeapRb, Producer, SharedRb};
 use serde::Serialize;
 use crate::player_thread::PlayerThread;
-use crate::thread_executor::{SingleThreadExecutor};
 
 pub struct Player {
     player_thread: Option<PlayerThread>,
@@ -60,7 +59,11 @@ impl PlayServer {
             input_context.streams().best(ffmpeg_next::media::Type::Video).unwrap();
         let video_stream_index = video_stream.index();
 
-        let decoder_context = ffmpeg_next::codec::Context::from_parameters(video_stream.parameters()).unwrap();
+        let mut decoder_context = ffmpeg_next::codec::Context::from_parameters(video_stream.parameters()).unwrap();
+        let mut threading_config = Config::default();
+        threading_config.count = num_cpus::get();
+        threading_config.kind = threading::Type::Frame;
+        decoder_context.set_threading(threading_config);
         let mut packet_decoder = decoder_context.decoder().video().unwrap();
 
 
@@ -147,12 +150,12 @@ impl PlayServer {
             if let Some(st) = seek_time {
                 if let Some(sc) = &self.stream_clock {
                     //TODO impl fast accurate seek
-                    // let mut pts = 0;
-                    // let expected_ts = sc.convert_time_to_pts(st as f64);
-                    // while pts < expected_ts {
-                    //     self.next_frame(false).unwrap();
-                    //     pts = self.latest_frame.as_ref().unwrap().pts().unwrap_or(0);
-                    // }
+                    let mut pts = 0;
+                    let expected_ts = sc.convert_time_to_pts(st as f64);
+                    while pts < expected_ts {
+                        self.next_frame(false).unwrap();
+                        pts = self.latest_frame.as_ref().unwrap().pts().unwrap_or(0);
+                    }
                     self.stream_clock = None;
                 }
                 seek_time = None;

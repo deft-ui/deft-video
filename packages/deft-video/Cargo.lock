@@ -948,6 +948,7 @@ dependencies = [
  "deft",
  "deft-skia-safe",
  "ffmpeg-next",
+ "num_cpus",
  "ringbuf",
  "serde",
 ]
