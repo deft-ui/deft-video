@@ -25,20 +25,17 @@ export default function Progress(props ?: ProgressProps): React.ReactElement {
 
     const style: StyleProps = {
         width: `${progressPercent}%`,
-        height: 3,
-        background: '#34566F',
     }
 
     return <Container
-        style={{
-            ...props.style,
-            height: 10,
-            justifyContent: 'center',
-        }}
+        style={props.style}
+        className="progress"
         onBoundsChange={onBoundsChange}
         onClick={onClick}
         cursor="pointer"
     >
-        <Container style={style}/>
+        <Container className="track">
+            <Container className="thumb" style={style} />
+        </Container>
     </Container>
 }

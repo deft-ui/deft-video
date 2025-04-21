@@ -1,0 +1,91 @@
+.main {
+    background: #000;
+    height: 100%;
+}
+.control-panel {
+    font-size: 12px;
+    color: #ddd;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    position: relative;
+}
+.main-panel {
+    background: #111111;
+}
+.main-panel-fullscreen {
+    display: none;
+}
+.main-panel-fullscreen-moving {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    display: flex;
+}
+
+.control-left-side-panel {
+    position: absolute;
+    left: 20px;
+}
+.control-right-side-panel {
+    position: absolute;
+    right: 20px;
+}
+.play-btn-group {
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+}
+.primary-btn {
+    width: 36px;
+    height: 36px;
+}
+.default-btn {
+    width: 30px;
+    height: 30px;
+}
+.tool-btn {
+    width: 18px;
+    height: 18px;
+}
+.stop-btn {
+    width: 18px;
+    height: 18px;
+}
+.open-btn {
+    color: #f9f9f9;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: #140940 1px;
+    background: #373737;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+}
+.open-btn:hover {
+    border: #0096FF 1px;
+    color: #0096FF;
+}
+.open-icon {
+    width: 24px;
+    height: 24px;
+}
+.progress {
+    height: 10px;
+    justify-content: center;
+    position: relative;
+}
+.progress .track {
+    position: absolute;
+    height: 2px;
+    width: 100%;
+    background: #ccc5;
+}
+.progress .thumb {
+    height: 100%;
+    background: #0096FF;
+}
+.progress:hover .track {
+    transform: scale(100%, 300%);
+}
