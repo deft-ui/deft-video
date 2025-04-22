@@ -8,16 +8,6 @@
         },
         createElement(tag) {
             const tagName = tag.toUpperCase();
-            if (tagName === "STYLE") {
-                return {
-                    tagName,
-                    styleSheet: {
-                        set cssText(css) {
-                            navigator.stylesheet.append(css);
-                        }
-                    },
-                }
-            }
             return {
                 tagName,
                 setAttribute() {},
