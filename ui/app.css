@@ -65,7 +65,6 @@
 }
 .open-btn:hover {
     border: #0096FF 1px;
-    color: #0096FF;
 }
 .open-icon {
     width: 24px;
@@ -88,4 +87,24 @@
 }
 .progress:hover .track {
     transform: scale(100%, 300%);
+}
+.play-list {
+    width: 200px;
+    height: 100%;
+    color: #ddd;
+    padding: 8px 0 8px 8px;
+    background: #111111;
+}
+.play-list-hidden {
+    display: none;
+}
+.play-list-item {
+    padding: 8px 12px;
+    color: #ddd;
+    border-left: 2px transparent;
+}
+.play-list-item-active, .play-list-item:hover {
+    color: #0096FF;
+    background: #292929;
+    border-left: 2px #0096FF;
 }

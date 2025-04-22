@@ -3,6 +3,7 @@ declare class VideoElement extends Element{
     setSrc(src: any): void;
     play(): void;
     pause(): void;
+    stop(): void;
     /**
      *
      * @param time {number}

@@ -133,6 +133,13 @@ impl VideoBackend {
         }
     }
 
+    #[js_func]
+    pub fn stop(&mut self) {
+        if let Some(ref mut player) = self.player {
+            player.stop();
+        }
+    }
+
 }
 
 impl ElementBackend for VideoBackend {

@@ -55,7 +55,44 @@ video.setSrc(videoPath);
 
 See `packages/deft-video/ts/video.d.ts`
 
-# Demo snapshot
+# How to build
+
+## Dependencies
+
+Make sure that `Rust` and `Node.js` are installed.
+
+On *nix systems, `clang`, `pkg-config` and FFmpeg libraries (including development headers) are required.
+
+On macOS:
+
+    brew install pkg-config ffmpeg
+
+On Debian-based systems:
+
+    apt install -y clang libavcodec-dev libavformat-dev libavutil-dev libswscale-dev pkg-config
+
+On Windows
+
+MSVC toolchain is required
+
+- Install LLVM (through official installer, Visual Studio, Chocolatey, or any other means), and add LLVM's `bin` path to `PATH`, or set `LIBCLANG_PATH` to that (see [`clang-sys` documentation](https://github.com/KyleMayes/clang-sys#environment-variables) for additional info).
+- Install FFmpeg (complete with headers) through any means, e.g. downloading a pre-built "full_build-shared" version from https://ffmpeg.org/download.html. Set `FFMPEG_DIR` to the directory containing `include` and `lib`.
+- `cargo build`.
+- Add FFmpeg's `bin` path to `PATH`
+
+## Develop
+
+```
+npm run dev
+```
+
+## Build
+
+```
+npm run build
+```
+
+# Snapshot
 
 <img src="https://github.com/deft-ui/deft-video/blob/main/snapshot.png?raw=true" width="450" />
 

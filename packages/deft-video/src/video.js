@@ -25,6 +25,10 @@ export class VideoElement extends Element {
         VideoBackend_pause(this.#backend)
     }
 
+    stop() {
+        VideoBackend_stop(this.#backend);
+    }
+
     /**
      *
      * @param time {number}

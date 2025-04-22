@@ -34,15 +34,19 @@ impl PlayerThread {
     }
 
     pub fn seek(&mut self, time: f32) {
-        self.sender.send(ControlMessage::Seek(time));
+        let _ = self.sender.send(ControlMessage::Seek(time));
     }
 
-    pub fn play(&mut self) {
-        self.sender.send(ControlMessage::Play);
+    pub fn play(&self) {
+        let _ = self.sender.send(ControlMessage::Play);
     }
 
-    pub fn pause(&mut self) {
-        self.sender.send(ControlMessage::Pause);
+    pub fn pause(&self) {
+        let _ = self.sender.send(ControlMessage::Pause);
+    }
+
+    pub fn stop(&self) {
+        let _ = self.sender.send(ControlMessage::Stop);
     }
 
 }
