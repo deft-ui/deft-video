@@ -1126,9 +1126,9 @@ dependencies = [
 
 [[package]]
 name = "deft"
-version = "0.4.4"
+version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71959ab973548696feeab4088bcea7356c71d3069ba32addafed767a612ab2a4"
+checksum = "349a824cfa15f5583432d7660d29fc5711d3d0626966cb44831df07da9e56618"
 dependencies = [
  "android_logger",
  "anyhow",
@@ -1254,6 +1254,7 @@ dependencies = [
  "deft",
  "deft-build",
  "deft-video",
+ "env_logger 0.11.8",
 ]
 
 [[package]]

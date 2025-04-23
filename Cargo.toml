@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-deft = "0.4.4"
+deft = "0.4.5"
 deft-video = { path = "packages/deft-video" }
+env_logger = "0.11.6"
 
 [build-dependencies]
 deft-build = { version = "0.2.0" }

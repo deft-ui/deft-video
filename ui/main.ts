@@ -5,6 +5,7 @@ import React from "react";
 function initWindow(): DeftWindow {
     const window = globalThis.mainWindow || (globalThis.mainWindow = new DeftWindow({
         title: 'DeftVideoPlayer',
+        decorations: false,
     }));
     window.bindResize((e: IResizeEvent) => {
         console.log("window resized", e);

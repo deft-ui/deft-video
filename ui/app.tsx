@@ -3,6 +3,7 @@ import React, {useContext, useEffect, useRef, useState} from 'react'
 import {formatHumanShortTime} from "./util/time-util";
 import Progress from "./progress";
 import {Button, Container, Image, PageContext, Row, Scroll} from "deft-react";
+import {AppTitle} from "./components/app-title";
 
 const App = () => {
 
@@ -207,50 +208,53 @@ const App = () => {
         return <Container key={idx} onClick={onClick} className={`play-list-item ${activeClass}`}>{it}</Container>
     });
 
-    return <Row className="main" onKeyDown={onKeyDown} onMouseMove={onMouseMove}>
-        <Container style={{flex: 1}}>
-            <Container style={{flex: 1, position: 'relative'}}>
-                <Container ref={wrapper} style={{width: '100%', height: '100%'}}></Container>
-                <Container style={{
-                    position: 'absolute',
-                    width: '100%',
-                    height: '100%',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    display: videoPath ? 'none' : 'flex',
-                }}>
-                    <Button onClick={onOpen} className="open-btn">
-                        <Image src={openIcon} className="open-icon" />
-                        打开文件
-                    </Button>
+    return <Container className="main">
+        {!fullscreen && <AppTitle /> }
+        <Row style={{flex: 1}} onKeyDown={onKeyDown} onMouseMove={onMouseMove}>
+            <Container style={{flex: 1}}>
+                <Container style={{flex: 1, position: 'relative'}}>
+                    <Container ref={wrapper} style={{width: '100%', height: '100%'}}></Container>
+                    <Container style={{
+                        position: 'absolute',
+                        width: '100%',
+                        height: '100%',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        display: videoPath ? 'none' : 'flex',
+                    }}>
+                        <Button onClick={onOpen} className="open-btn">
+                            <Image src={openIcon} className="open-icon" />
+                            打开文件
+                        </Button>
+                    </Container>
+                </Container>
+                <Container className={`main-panel ${fullscreen ? (mouseMoving ? 'main-panel-fullscreen-moving' : 'main-panel-fullscreen') : ''}`}>
+                    <Progress value={progressPercent} onChange={onSeek} />
+                    <Row className="control-panel">
+                        {
+                            videoPath &&
+                            <Container className="control-left-side-panel">
+                                {formatHumanShortTime(currentTime) + ' / ' + formatHumanShortTime(duration)}
+                            </Container>
+                        }
+                        <Row className="play-btn-group" style={{flex: 1}}>
+                            {/*<Image src={stopIcon} className="stop-btn" cursor='pointer' />*/}
+                            <Image onClick={onPrev} src={prevIcon} className="default-btn" cursor='pointer' />
+                            <Image src={statusIcon} className="primary-btn" cursor='pointer' onClick={togglePlayStatus} />
+                            <Image onClick={onNext} src={nextIcon} className="default-btn" cursor='pointer' />
+                        </Row>
+                        {/*<Label text={formatHumanShortTime(duration)} />*/}
+                        <Row className="control-right-side-panel">
+                            <Image onClick={onFullscreen} src={fullscreenIcon} className="tool-btn" cursor="pointer" />
+                        </Row>
+                    </Row>
                 </Container>
             </Container>
-            <Container className={`main-panel ${fullscreen ? (mouseMoving ? 'main-panel-fullscreen-moving' : 'main-panel-fullscreen') : ''}`}>
-                <Progress value={progressPercent} onChange={onSeek} />
-                <Row className="control-panel">
-                    {
-                        videoPath &&
-                        <Container className="control-left-side-panel">
-                            {formatHumanShortTime(currentTime) + ' / ' + formatHumanShortTime(duration)}
-                        </Container>
-                    }
-                    <Row className="play-btn-group" style={{flex: 1}}>
-                        {/*<Image src={stopIcon} className="stop-btn" cursor='pointer' />*/}
-                        <Image onClick={onPrev} src={prevIcon} className="default-btn" cursor='pointer' />
-                        <Image src={statusIcon} className="primary-btn" cursor='pointer' onClick={togglePlayStatus} />
-                        <Image onClick={onNext} src={nextIcon} className="default-btn" cursor='pointer' />
-                    </Row>
-                    {/*<Label text={formatHumanShortTime(duration)} />*/}
-                    <Row className="control-right-side-panel">
-                        <Image onClick={onFullscreen} src={fullscreenIcon} className="tool-btn" cursor="pointer" />
-                    </Row>
-                </Row>
-            </Container>
-        </Container>
-        <Scroll className={`play-list ${fullscreen ? 'play-list-hidden' : ''}`}>
-            {playList}
-        </Scroll>
-    </Row>
+            <Scroll className={`play-list ${fullscreen ? 'play-list-hidden' : ''}`}>
+                {playList}
+            </Scroll>
+        </Row>
+    </Container>
 }
 
 export default App

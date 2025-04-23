@@ -36,8 +36,23 @@ module.exports = {
                 exclude: /node_modules/,
             },
             {
-                test: /\.css$/,
-                use: [ 'deft-style-loader', 'css-loader', 'postcss-loader']
+                test: /\.s?css$/,
+                use: [
+                    'deft-style-loader',
+                    'css-loader',
+                    {
+                        loader: 'postcss-loader',
+                        options: {
+                            postcssOptions: {
+                                plugins: [
+                                    [
+                                        'postcss-preset-env',
+                                    ],
+                                ],
+                            },
+                        },
+                    },
+                ]
             },
             {
                 test: /\.(jpe?g|png|svg|gif)/i,

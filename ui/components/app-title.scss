@@ -1,0 +1,47 @@
+.app-title {
+  height: 36px;
+  width: 100%;
+  background: #111111;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+
+  .app-title-btn-group {
+    flex-direction: row;
+    gap: 10px;
+
+    .btn {
+      width: 30px;
+      height: 30px;
+      justify-content: center;
+      align-items: center;
+      padding: 8px;
+      color: #bbb;
+    }
+
+    .btn:hover {
+      color: #0096FF;
+    }
+
+    .btn-min-icon {
+      border-bottom: 2px #bbb;
+      width: 100%;
+      height: 100%;
+    }
+
+    .btn:hover .btn-min-icon {
+      border-bottom: 2px #0096FF;
+    }
+
+    .btn-max-icon {
+      width: 100%;
+      height: 100%;
+      border: 1px #bbb;
+    }
+
+    .btn:hover .btn-max-icon {
+      border: 1px #0096FF;
+    }
+  }
+}
+

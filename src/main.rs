@@ -22,6 +22,7 @@ impl IApp for MyApp {
 }
 
 fn main() {
+    env_logger::init();
     let app = App::new(MyApp {});
     bootstrap(app.clone());
 }

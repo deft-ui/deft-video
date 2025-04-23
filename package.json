@@ -10,7 +10,7 @@
   "dependencies": {
     "cross-env": "^7.0.3",
     "deft-react": "^0.4.0",
-    "deft-sys": "^0.4.0",
+    "deft-sys": "^0.4.2",
     "postcss-loader": "^8.1.1",
     "react": "18.1.0",
     "react-reconciler": "0.28.0"
@@ -24,6 +24,7 @@
     "deft-style-loader": "^1.0.1",
     "deft-webpack-plugin": "^0.1.11",
     "postcss": "^8.5.3",
+    "postcss-preset-env": "^10.1.6",
     "ts-loader": "^9.5.1",
     "typescript": "^5.4.5",
     "webpack": "5.91.0",
