@@ -69,7 +69,7 @@ On macOS:
 
 On Debian-based systems:
 
-    apt install -y clang libavcodec-dev libavformat-dev libavutil-dev libswscale-dev pkg-config
+    apt install -y clang libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavfilter-dev libavdevice-dev  pkg-config
 
 On Windows
 

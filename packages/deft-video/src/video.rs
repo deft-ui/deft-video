@@ -4,7 +4,7 @@ use deft::element::{Element, ElementBackend, ElementWeak};
 use deft::event_loop::create_event_loop_fn_mut;
 use deft::js::{FromJsValue, JsError};
 use deft::render::RenderFn;
-use deft::{bind_js_event_listener, event, js_methods, js_weak_value, mrc_object, ok_or_return, JsValue};
+use deft::{bind_js_event_listener, element_backend, event, js_methods, js_weak_value, mrc_object, ok_or_return, JsValue};
 use ffmpeg_next::ffi::memcpy;
 use ffmpeg_next::frame::Video;
 use serde::Serialize;
@@ -14,13 +14,12 @@ use skia_safe::Image;
 use std::ffi::{c_ulong, c_void};
 use std::sync::{Arc, Mutex};
 
-#[mrc_object]
+#[element_backend]
 pub struct VideoBackend {
     element: ElementWeak,
     frame: Arc<Mutex<Option<Video>>>,
     player: Option<PlayerThread>,
 }
-js_weak_value!(VideoBackend, VideoBackendWeak);
 
 #[event]
 struct ProgressEvent(f32);
@@ -39,27 +38,6 @@ struct LoadedMetaData(Meta);
 
 #[js_methods]
 impl VideoBackend {
-
-    #[js_func]
-    pub fn bind_js_event_listener(&mut self, event_type: String, listener: JsValue) -> Result<u32, JsError> {
-        let mut element = self.element.upgrade_mut()?;
-        let id = bind_js_event_listener!(
-            element, event_type.as_str(), listener;
-            "progress" => ProgressEventListener,
-            "play" => PlayEventListener,
-            "pause" => PauseEventListener,
-            "loadedmetadata" => LoadedMetaDataListener,
-            "stop" => StopEventListener,
-        );
-        Ok(id)
-    }
-
-    #[js_func]
-    pub fn new() -> Result<(Element, VideoBackend), JsError> {
-        let ele = Element::create(VideoBackend::create);
-        let backend = ele.get_backend_as::<VideoBackend>().clone();
-        Ok((ele, backend))
-    }
 
     #[js_func]
     pub fn set_src(&mut self, src: String) {
@@ -154,8 +132,8 @@ impl ElementBackend for VideoBackend {
         }.to_ref()
     }
 
-    fn get_name(&self) -> &str {
-        "Video"
+    fn get_base_mut(&mut self) -> Option<&mut dyn ElementBackend> {
+        None
     }
 
     fn render(&mut self) -> RenderFn {
@@ -187,9 +165,32 @@ impl ElementBackend for VideoBackend {
         let left = (view_width - rect_width) / 2;
         let top = (view_height - rect_height) / 2;
         let rect = Rect::new(left as f32, top as f32, (left + rect_width) as f32, (top + rect_height) as f32);
-        RenderFn::new(move |canvas| {
-            canvas.draw_image_rect(&img, None, &rect, &Paint::default());
+        RenderFn::new(move |painter| {
+            painter.canvas.draw_image_rect(&img, None, &rect, &Paint::default());
         })
+    }
+
+    fn bind_js_listener(&mut self, event_type: &str, listener: JsValue) -> Option<u32> {
+        let mut element = self.element.upgrade().ok()?;
+        let id = match event_type {
+            "progress" => {
+                element.register_event_listener(ProgressEventListener::from_js_value(listener).ok()?)
+            }
+            "play" => {
+                element.register_event_listener(PlayEventListener::from_js_value(listener).ok()?)
+            }
+            "pause" => {
+                element.register_event_listener(PauseEventListener::from_js_value(listener).ok()?)
+            }
+            "loadedmetadata" => {
+                element.register_event_listener(LoadedMetaDataListener::from_js_value(listener).ok()?)
+            }
+            "stop" => {
+                element.register_event_listener(StopEventListener::from_js_value(listener).ok()?)
+            }
+            _ => return None,
+        };
+        Some(id)
     }
 }
 
