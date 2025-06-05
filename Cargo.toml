@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-deft = "0.5.1"
+deft = { version = "0.10.2", features = ["dialog", "gl"] }
 deft-video = { path = "packages/deft-video" }
 env_logger = "0.11.6"
 
@@ -13,8 +13,6 @@ deft-build = { version = "0.2.0" }
 
 [features]
 tray = ["deft/tray"]
-x11 = ["deft/x11"]
-wayland = ["deft/wayland"]
 
 [lib]
 name = "deftapp"

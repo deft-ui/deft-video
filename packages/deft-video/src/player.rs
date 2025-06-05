@@ -1,29 +1,22 @@
-use std::io::Seek;
-use std::mem::MaybeUninit;
-use std::ops::Range;
-use std::sync::{mpsc, Arc, Mutex};
-use std::thread;
-use std::time::{Duration, Instant};
 use anyhow::anyhow;
 use bytemuck::Pod;
-use cpal::{Sample, SizedSample};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use cpal::{SizedSample};
 use ffmpeg_next::decoder::{Audio, Video};
+use ffmpeg_next::ffi::AV_TIME_BASE;
 use ffmpeg_next::format::context::Input;
 use ffmpeg_next::format::Pixel;
 use ffmpeg_next::software::resampling::Context;
-use ffmpeg_next::{frame, threading, Error, Rational};
-use ffmpeg_next::ffi::AV_TIME_BASE;
 use ffmpeg_next::threading::Config;
+use ffmpeg_next::{frame, threading, Rational};
 use ringbuf::{HeapRb, Producer, SharedRb};
 use serde::Serialize;
-use crate::player_thread::PlayerThread;
+use std::mem::MaybeUninit;
+use std::sync::{mpsc, Arc};
+use std::thread;
+use std::time::Duration;
 
-pub struct Player {
-    player_thread: Option<PlayerThread>,
-}
-
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct Meta {
     pub width: usize,
     pub height: usize,
@@ -31,7 +24,6 @@ pub struct Meta {
 }
 
 pub struct PlayServer {
-    path: String,
     video_stream_index: usize,
     packet_decoder: Video,
 
@@ -54,26 +46,30 @@ pub enum ControlMessage {
 
 impl PlayServer {
     pub fn new(path: String) -> Self {
-        let mut input_context = ffmpeg_next::format::input(&path).unwrap();
-        let video_stream =
-            input_context.streams().best(ffmpeg_next::media::Type::Video).unwrap();
+        let input_context = ffmpeg_next::format::input(&path).unwrap();
+        let video_stream = input_context
+            .streams()
+            .best(ffmpeg_next::media::Type::Video)
+            .unwrap();
         let video_stream_index = video_stream.index();
 
-        let mut decoder_context = ffmpeg_next::codec::Context::from_parameters(video_stream.parameters()).unwrap();
+        let mut decoder_context =
+            ffmpeg_next::codec::Context::from_parameters(video_stream.parameters()).unwrap();
         let mut threading_config = Config::default();
         threading_config.count = num_cpus::get();
         threading_config.kind = threading::Type::Frame;
         decoder_context.set_threading(threading_config);
-        let mut packet_decoder = decoder_context.decoder().video().unwrap();
+        let packet_decoder = decoder_context.decoder().video().unwrap();
 
-
-        let audio_stream =
-            input_context.streams().best(ffmpeg_next::media::Type::Audio).unwrap();
+        let audio_stream = input_context
+            .streams()
+            .best(ffmpeg_next::media::Type::Audio)
+            .unwrap();
         let audio_stream_index = audio_stream.index();
-        let audio_decoder_context = ffmpeg_next::codec::Context::from_parameters(audio_stream.parameters()).unwrap();
-        let mut audio_packet_decoder = audio_decoder_context.decoder().audio().unwrap();
+        let audio_decoder_context =
+            ffmpeg_next::codec::Context::from_parameters(audio_stream.parameters()).unwrap();
+        let audio_packet_decoder = audio_decoder_context.decoder().audio().unwrap();
         let mut player = Self {
-            path,
             video_stream_index,
             packet_decoder,
             audio_stream_index,
@@ -85,7 +81,7 @@ impl PlayServer {
             latest_frame: None,
             stream_clock: None,
         };
-        player.next_frame(false);
+        let _ = player.next_frame(false);
         player
     }
 
@@ -95,23 +91,28 @@ impl PlayServer {
     }
 
     pub fn get_width(&self) -> Option<usize> {
-        self.latest_frame.as_ref().map(|frame| frame.width() as usize)
+        self.latest_frame
+            .as_ref()
+            .map(|frame| frame.width() as usize)
     }
 
     pub fn get_height(&self) -> Option<usize> {
-        self.latest_frame.as_ref().map(|frame| frame.height() as usize)
+        self.latest_frame
+            .as_ref()
+            .map(|frame| frame.height() as usize)
     }
 
     pub fn play(
         &mut self,
         mut renderer: Box<dyn FnMut(frame::Video) + Send + 'static>,
-        mut progress_handler: Box<dyn  FnMut(f32)>,
-        mut control_msg_receiver: mpsc::Receiver<ControlMessage>,
+        mut progress_handler: Box<dyn FnMut(f32)>,
+        control_msg_receiver: mpsc::Receiver<ControlMessage>,
         mut stop_handler: Box<dyn FnMut()>,
     ) {
         let (audio_frame_sender, audio_frame_receiver) = mpsc::channel();
         self.audio_sender = Some(audio_frame_sender);
-        let mut audio_playback = AudioPlayback::<f32>::new(&self.audio_packet_decoder, audio_frame_receiver);
+        let audio_playback =
+            AudioPlayback::<f32>::new(&self.audio_packet_decoder, audio_frame_receiver);
 
         thread::spawn(move || {
             // Note: playback will stop when audio_frame_sender dropped
@@ -165,10 +166,14 @@ impl PlayServer {
                 Ok(frame) => frame,
                 Err(_err) => break,
             };
-            let mut pts = self.latest_frame.as_ref().unwrap().pts();
+            let pts = self.latest_frame.as_ref().unwrap().pts();
             // println!("pts: {:?}", pts);
             if self.stream_clock.is_none() {
-                let latest_pts = self.latest_frame.as_ref().map(|f| f.pts().unwrap_or(0)).unwrap_or(0);
+                let latest_pts = self
+                    .latest_frame
+                    .as_ref()
+                    .map(|f| f.pts().unwrap_or(0))
+                    .unwrap_or(0);
                 self.stream_clock = Some(StreamClock::new(self.timebase, latest_pts));
             }
             let stream_clock = self.stream_clock.as_ref().unwrap();
@@ -186,7 +191,7 @@ impl PlayServer {
     pub fn seek(&mut self, ts: f32) {
         //TODO check error
         let ts = (ts * AV_TIME_BASE as f32) as i64;
-        if let Err(e) = self.input_context.seek(ts, (0..ts)) {
+        if let Err(e) = self.input_context.seek(ts, 0..ts) {
             println!("seek error: {:?}", e);
         }
         // Clear buffers
@@ -196,18 +201,25 @@ impl PlayServer {
 
     fn next_frame(&mut self, play_audio: bool) -> Result<frame::Video, anyhow::Error> {
         let mut decoded_frame = ffmpeg_next::util::frame::Video::empty();
-        if self.packet_decoder.receive_frame(&mut decoded_frame).is_ok() {
+        if self
+            .packet_decoder
+            .receive_frame(&mut decoded_frame)
+            .is_ok()
+        {
             let format = decoded_frame.format();
-            let rebuild_rescale_context = self.rescale_context.as_ref().map_or(true, |r| r.input().format != format);
+            let rebuild_rescale_context = self
+                .rescale_context
+                .as_ref()
+                .map_or(true, |r| r.input().format != format);
             if rebuild_rescale_context {
                 self.rescale_context = Some(create_rescale_context(&decoded_frame));
             }
 
             let mut rgb_frame = ffmpeg_next::util::frame::Video::empty();
-            let mut rescaler = self.rescale_context.as_mut().unwrap();
+            let rescaler = self.rescale_context.as_mut().unwrap();
             rescaler.run(&decoded_frame, &mut rgb_frame).unwrap();
             self.latest_frame = Some(decoded_frame);
-            return Ok(rgb_frame)
+            return Ok(rgb_frame);
         }
 
         let (stream, packet) = self.input_context.packets().next().ok_or(anyhow!("eof"))?;
@@ -217,7 +229,11 @@ impl PlayServer {
         } else if stream.index() == self.audio_stream_index {
             let mut decoded_frame = ffmpeg_next::util::frame::Audio::empty();
             self.audio_packet_decoder.send_packet(&packet).unwrap();
-            while self.audio_packet_decoder.receive_frame(&mut decoded_frame).is_ok() {
+            while self
+                .audio_packet_decoder
+                .receive_frame(&mut decoded_frame)
+                .is_ok()
+            {
                 // println!("sending audio frame");
                 if let Some(audio_frame_sender) = &mut self.audio_sender {
                     if play_audio {
@@ -228,10 +244,11 @@ impl PlayServer {
         }
         self.next_frame(play_audio)
     }
-
 }
 
-fn create_rescale_context(frame: &ffmpeg_next::util::frame::Video) -> ffmpeg_next::software::scaling::Context {
+fn create_rescale_context(
+    frame: &ffmpeg_next::util::frame::Video,
+) -> ffmpeg_next::software::scaling::Context {
     ffmpeg_next::software::scaling::Context::get(
         frame.format(),
         frame.width(),
@@ -240,9 +257,9 @@ fn create_rescale_context(frame: &ffmpeg_next::util::frame::Video) -> ffmpeg_nex
         frame.width(),
         frame.height(),
         ffmpeg_next::software::scaling::Flags::BILINEAR,
-    ).unwrap()
+    )
+    .unwrap()
 }
-
 
 unsafe impl Send for AudioPlayback<f32> {}
 
@@ -254,17 +271,21 @@ struct AudioPlayback<T> {
 }
 
 impl<T: Send + Pod + SizedSample + 'static> AudioPlayback<T> {
-    pub fn new(packet_decoder: &Audio, frame_receiver: mpsc::Receiver<ffmpeg_next::util::frame::Audio>) -> Self {
+    pub fn new(
+        packet_decoder: &Audio,
+        frame_receiver: mpsc::Receiver<ffmpeg_next::util::frame::Audio>,
+    ) -> Self {
         let buffer = HeapRb::new(4096 * 2);
-        let (mut sample_producer, mut sample_consumer) = buffer.split();
+        let (sample_producer, mut sample_consumer) = buffer.split();
 
         let host = cpal::default_host();
-        let device = host.default_output_device().expect("no output device available");
+        let device = host
+            .default_output_device()
+            .expect("no output device available");
 
         let config = device.default_output_config().unwrap();
         let fmt = config.sample_format();
         println!("audio format: {:?}", fmt);
-
 
         let output_channel_layout = match config.channels() {
             1 => ffmpeg_next::util::channel_layout::ChannelLayout::MONO,
@@ -297,7 +318,6 @@ impl<T: Send + Pod + SizedSample + 'static> AudioPlayback<T> {
 
         cpal_stream.play().unwrap();
 
-
         let resampler = ffmpeg_next::software::resampling::Context::get(
             packet_decoder.format(),
             packet_decoder.channel_layout(),
@@ -306,7 +326,7 @@ impl<T: Send + Pod + SizedSample + 'static> AudioPlayback<T> {
             output_channel_layout,
             config.sample_rate().0,
         )
-            .unwrap();
+        .unwrap();
         Self {
             frame_receiver,
             sample_producer,
@@ -325,7 +345,6 @@ impl<T: Send + Pod + SizedSample + 'static> AudioPlayback<T> {
             let mut audio_frame = ffmpeg_next::util::frame::Audio::empty();
             self.context.run(&frame, &mut audio_frame).unwrap();
             // println!("resampled audio frame");
-
 
             let expected_bytes =
                 audio_frame.samples() * audio_frame.channels() as usize * size_of::<T>();
@@ -357,16 +376,21 @@ impl StreamClock {
 
         let start_time = std::time::Instant::now();
 
-        Self { time_base_seconds, start_time, start_pts }
+        Self {
+            time_base_seconds,
+            start_time,
+            start_pts,
+        }
     }
 
     fn convert_pts_to_instant(&self, pts: Option<i64>) -> Option<std::time::Duration> {
         pts.and_then(|pts| {
-            let pts_since_start =
-                std::time::Duration::from_secs_f64((pts - self.start_pts) as f64 * self.time_base_seconds);
+            let pts_since_start = std::time::Duration::from_secs_f64(
+                (pts - self.start_pts) as f64 * self.time_base_seconds,
+            );
             self.start_time.checked_add(pts_since_start)
         })
-            .map(|absolute_pts| absolute_pts.duration_since(std::time::Instant::now()))
+        .map(|absolute_pts| absolute_pts.duration_since(std::time::Instant::now()))
     }
 
     fn convert_pts_to_time(&self, pts: i64) -> f64 {
@@ -375,25 +399,5 @@ impl StreamClock {
 
     fn convert_time_to_pts(&self, time: f64) -> i64 {
         (time / self.time_base_seconds) as i64
-    }
-
-}
-
-#[derive(Clone)]
-struct Signal {
-    lit: Arc<Mutex<bool>>,
-}
-
-impl Signal {
-    pub fn new() -> Self {
-        Self {
-            lit: Arc::new(Mutex::new(false))
-        }
-    }
-    pub fn lit_up(&self) {
-        *self.lit.lock().unwrap() = true;
-    }
-    pub fn is_lit(&self) -> bool {
-        *self.lit.lock().unwrap()
     }
 }

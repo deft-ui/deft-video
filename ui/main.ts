@@ -6,6 +6,8 @@ function initWindow(): DeftWindow {
     const window = globalThis.mainWindow || (globalThis.mainWindow = new DeftWindow({
         title: 'DeftVideoPlayer',
         decorations: false,
+        width: 800,
+        height: 500,
     }));
     window.bindResize((e: IResizeEvent) => {
         console.log("window resized", e);

@@ -8,7 +8,7 @@ description = "Video component for deft"
 authors = ["KasonYang <me@kason.fun>"]
 
 [dependencies]
-deft = "0.7.1"
+deft = "0.10.0"
 ffmpeg-next = "7.1.0"
 skia-safe = { package = "deft-skia-safe", version = "*" }
 serde = { version = "1.0.213", features = ["derive"] }
@@ -17,4 +17,4 @@ ringbuf = "0.3.3"
 bytemuck = "1.13.1"
 anyhow = "1.0.93"
 num_cpus = "1.16.0"
-deft-macros = "0.2.1"
+deft-macros = "0.3.0"

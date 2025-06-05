@@ -1,10 +1,10 @@
+use crate::player::{ControlMessage, Meta};
 use std::sync::mpsc;
 use std::sync::mpsc::Sender;
 use std::thread;
-use crate::player::{ControlMessage, Meta};
 
 pub struct PlayerThread {
-    sender: Sender<ControlMessage>
+    sender: Sender<ControlMessage>,
 }
 
 pub struct PlayParams {
@@ -16,21 +16,27 @@ pub struct PlayParams {
 }
 
 impl PlayerThread {
-
-    pub fn start(mut params: PlayParams) -> Self {
+    pub fn start(params: PlayParams) -> Self {
         let (sender, receiver) = mpsc::channel();
         thread::spawn(move || {
             let mut player = crate::player::PlayServer::new(params.path.clone());
             let width = player.get_width().unwrap();
             let height = player.get_height().unwrap();
             let duration = player.get_duration();
-            let meta = Meta { width, height, duration };
+            let meta = Meta {
+                width,
+                height,
+                duration,
+            };
             (params.on_meta_loaded)(meta);
-            player.play(params.renderer, params.on_progress, receiver, params.on_stop);
+            player.play(
+                params.renderer,
+                params.on_progress,
+                receiver,
+                params.on_stop,
+            );
         });
-        Self {
-            sender
-        }
+        Self { sender }
     }
 
     pub fn seek(&mut self, time: f32) {
@@ -48,5 +54,4 @@ impl PlayerThread {
     pub fn stop(&self) {
         let _ = self.sender.send(ControlMessage::Stop);
     }
-
 }

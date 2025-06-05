@@ -2,8 +2,8 @@
 use deft::app::{App, IApp};
 use deft::bootstrap;
 use deft::js::js_engine::JsEngine;
-use std::env;
 use deft_video::deft_video_init;
+use std::env;
 
 struct MyApp {}
 
