@@ -80,6 +80,8 @@ MSVC toolchain is required
 - `cargo build`.
 - Add FFmpeg's `bin` path to `PATH`
 
+Tested using [ffmpeg-n6.1.1-1-g61b88b4dda-win64-lgpl-shared-6.1](https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2024-01-31-12-54/ffmpeg-n6.1.1-1-g61b88b4dda-win64-lgpl-shared-6.1.zip)
+
 ## Develop
 
 ```

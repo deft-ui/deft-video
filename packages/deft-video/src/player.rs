@@ -3,7 +3,7 @@ use bytemuck::Pod;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{SizedSample};
 use ffmpeg_next::decoder::{Audio, Video};
-use ffmpeg_next::ffi::AV_TIME_BASE;
+use ffmpeg_next::ffi::{av_rescale_rnd, swr_get_delay, AV_TIME_BASE};
 use ffmpeg_next::format::context::Input;
 use ffmpeg_next::format::Pixel;
 use ffmpeg_next::software::resampling::Context;
@@ -15,6 +15,7 @@ use std::mem::MaybeUninit;
 use std::sync::{mpsc, Arc};
 use std::thread;
 use std::time::Duration;
+use ffmpeg_next::ffi::AVRounding::AV_ROUND_UP;
 
 #[derive(Serialize, Clone, Debug)]
 pub struct Meta {
@@ -342,7 +343,17 @@ impl<T: Send + Pod + SizedSample + 'static> AudioPlayback<T> {
                 Err(_) => return,
             };
             // println!("receive audio frame");
-            let mut audio_frame = ffmpeg_next::util::frame::Audio::empty();
+            let input = self.context.input();
+            let output = self.context.output();
+            let input_rate = input.rate as i64;
+            let output_rate = output.rate as i64;
+            let output_format = output.format;
+            let output_channel_layout = output.channel_layout;
+            let out_samples = unsafe {
+                let delay = swr_get_delay(self.context.as_mut_ptr(), input_rate);
+                av_rescale_rnd(delay + frame.samples() as i64, output_rate, input_rate, AV_ROUND_UP)
+            } as usize;
+            let mut audio_frame = ffmpeg_next::util::frame::Audio::new(output_format, out_samples, output_channel_layout);
             self.context.run(&frame, &mut audio_frame).unwrap();
             // println!("resampled audio frame");
 

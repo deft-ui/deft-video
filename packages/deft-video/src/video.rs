@@ -4,12 +4,12 @@ use deft::element::{Element, ElementBackend, ElementWeak};
 use deft::event_loop::create_event_loop_fn_mut;
 use deft::render::RenderFn;
 use deft::{element_backend, event, js_methods, ok_or_return};
-use ffmpeg_next::ffi::memcpy;
 use ffmpeg_next::frame::Video;
 use skia_safe::Image;
 use skia_safe::{AlphaType, Bitmap, ColorSpace, ColorType, ImageInfo, Paint, Rect};
-use std::ffi::{c_ulong, c_void};
+use std::ffi::{c_void};
 use std::sync::{Arc, Mutex};
+use libc::{memcpy, size_t};
 
 #[element_backend]
 pub struct VideoBackend {
@@ -185,7 +185,7 @@ fn load_image_from_rgba_bytes(
     unsafe {
         let dest = bm.pixels();
         let src = data.as_ptr() as *const c_void;
-        memcpy(dest, src, data.len() as c_ulong);
+        memcpy(dest, src, data.len() as size_t);
     }
     bm.as_image()
 }
